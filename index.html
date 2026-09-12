@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d8c2a6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Say It</title>
+
+  <style>
+    :root {
+      --paper: #d8c2a6;
+      --ink: #2f261f;
+      --muted: #705d4c;
+      --cream: #f7eddc;
+      --cream-deep: #eee0c8;
+
+      --green: #708c69;
+      --green-dark: #587153;
+      --sage: #91a47e;
+      --mustard: #d5aa51;
+      --orange: #ce8453;
+      --red: #c75e4a;
+      --red-dark: #a64b3b;
+      --blue: #708ca9;
+      --plum: #896c82;
+      --plum-dark: #70566a;
+
+      --shadow: 0 9px 0 rgba(79, 57, 40, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-width: 0;
+      min-height: 100vh;
+      min-height: 100svh;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        linear-gradient(rgba(255,255,255,0.11), rgba(255,255,255,0.11)),
+        repeating-linear-gradient(
+          0deg,
+          transparent 0,
+          transparent 25px,
+          rgba(92,67,47,0.025) 26px
+        ),
+        var(--paper);
+      padding:
+        max(14px, env(safe-area-inset-top))
+        max(14px, env(safe-area-inset-right))
+        max(16px, env(safe-area-inset-bottom))
+        max(14px, env(safe-area-inset-left));
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .app {
+      width: min(760px, 100%);
+      min-width: 0;
+      margin: 0 auto;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .menu {
+      min-height: calc(100svh - 30px);
+      display: grid;
+      place-items: center;
+      padding: 8px 0;
+    }
+
+    .menu-card {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      overflow: hidden;
+      background: var(--cream);
+      border: 2px solid rgba(65, 48, 36, 0.18);
+      border-radius: 12px 28px 14px 24px;
+      box-shadow: var(--shadow);
+      padding: 32px 28px 28px;
+      transform: rotate(-0.25deg);
+    }
+
+    .menu-card::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      pointer-events: none;
+      border: 1px dashed rgba(73, 53, 39, 0.14);
+      border-radius: 8px 20px 10px 18px;
+    }
+
+    .menu-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-family: "Trebuchet MS", "Arial Narrow", Arial, sans-serif;
+      font-size: clamp(2.7rem, 12vw, 4.8rem);
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      max-width: 420px;
+      margin: 0 0 26px;
+      color: var(--muted);
+      font-size: clamp(0.98rem, 4vw, 1.06rem);
+      line-height: 1.45;
+      font-style: italic;
+    }
+
+    .setting-block {
+      margin: 0 0 24px;
+    }
+
+    .setting-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .setting-title {
+      margin: 0;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-size: 0.86rem;
+      font-weight: 900;
+      letter-spacing: 0.095em;
+      text-transform: uppercase;
+    }
+
+    .setting-note {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-style: italic;
+      text-align: right;
+    }
+
+    .timer-options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .time-option,
+    .difficulty-option {
+      min-height: 48px;
+      border: 2px solid rgba(59, 45, 33, 0.16);
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-weight: 900;
+      box-shadow: 0 5px 0 rgba(75, 53, 38, 0.15);
+      transition: transform 0.1s ease, filter 0.1s ease;
+    }
+
+    .time-option {
+      padding: 13px 7px;
+      border-radius: 9px 14px 8px 12px;
+      color: #fffaf1;
+    }
+
+    .time-option:nth-child(1) {
+      background: var(--green);
+    }
+
+    .time-option:nth-child(2) {
+      background: var(--mustard);
+      color: #3a2b14;
+    }
+
+    .time-option:nth-child(3) {
+      background: var(--blue);
+    }
+
+    .time-option:active,
+    .difficulty-option:active {
+      transform: translateY(2px);
+    }
+
+    .time-option.selected,
+    .difficulty-option.selected {
+      outline: 3px solid var(--ink);
+      outline-offset: 2px;
+      transform: rotate(-1deg);
+    }
+
+    .custom-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .custom-row input {
+      width: 100%;
+      min-width: 0;
+      min-height: 48px;
+      background: #fffaf1;
+      color: var(--ink);
+      border: 2px solid rgba(70, 51, 38, 0.2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      outline: none;
+      font-size: 16px; /* Prevents Safari from auto-zooming the page on focus. */
+      box-shadow: inset 0 2px 0 rgba(103, 77, 58, 0.05);
+    }
+
+    .custom-row input:focus {
+      border-color: var(--plum);
+    }
+
+    .difficulty-options {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .difficulty-option {
+      aspect-ratio: 1 / 0.88;
+      min-width: 0;
+      padding: 8px 4px;
+      border-radius: 13px 8px 12px 9px;
+      font-size: clamp(1rem, 5vw, 1.25rem);
+      color: #fffaf1;
+    }
+
+    .difficulty-option[data-difficulty="1"] {
+      background: var(--green);
+    }
+
+    .difficulty-option[data-difficulty="2"] {
+      background: var(--sage);
+      color: #26311f;
+    }
+
+    .difficulty-option[data-difficulty="3"] {
+      background: var(--mustard);
+      color: #3a2b14;
+    }
+
+    .difficulty-option[data-difficulty="4"] {
+      background: var(--orange);
+    }
+
+    .difficulty-option[data-difficulty="5"] {
+      background: var(--red);
+    }
+
+    .primary {
+      width: 100%;
+      min-height: 54px;
+      border-radius: 12px 8px 14px 9px;
+      padding: 15px 18px;
+      background: var(--red);
+      color: #fff9ef;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-weight: 900;
+      font-size: 1.05rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      box-shadow: 0 6px 0 var(--red-dark);
+    }
+
+    .primary:active {
+      transform: translateY(3px);
+      box-shadow: 0 3px 0 var(--red-dark);
+    }
+
+    .status {
+      margin-top: 14px;
+      color: #9f3429;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .status:empty {
+      display: none;
+    }
+
+    .game {
+      width: 100%;
+      min-width: 0;
+      padding-bottom: calc(90px + env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      position: sticky;
+      top: max(6px, env(safe-area-inset-top));
+      z-index: 5;
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr) 70px;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 16px;
+      padding: 9px;
+      border-radius: 14px 24px 12px 20px;
+      background: rgba(247, 237, 220, 0.96);
+      border: 2px solid rgba(72, 53, 40, 0.15);
+      box-shadow: 0 6px 0 rgba(82, 61, 45, 0.1);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+
+    .timer {
+      min-width: 0;
+      text-align: center;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-size: clamp(2rem, 12vw, 4.4rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.05em;
+      color: var(--ink);
+      white-space: nowrap;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .timer.expired {
+      color: #b73831;
+      transform: scale(1.04) rotate(-1deg);
+    }
+
+    .small-btn {
+      min-width: 0;
+      min-height: 46px;
+      border-radius: 9px 12px 8px 11px;
+      padding: 6px;
+      overflow: hidden;
+      background: var(--plum);
+      color: #fffaf1;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 900;
+      box-shadow: 0 4px 0 var(--plum-dark);
+    }
+
+    .card {
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      background: var(--cream);
+      border: 2px solid rgba(69, 51, 37, 0.16);
+      border-radius: 16px 26px 14px 22px;
+      padding: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    .word-row {
+      display: grid;
+      grid-template-columns: minmax(86px, 0.8fr) minmax(0, 2.2fr);
+      align-items: center;
+      min-height: 78px;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(77, 57, 42, 0.13);
+    }
+
+    .word-row:last-child {
+      border-bottom: 0;
+    }
+
+    .category {
+      min-width: 0;
+      color: var(--muted);
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-size: 0.76rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.105em;
+      overflow-wrap: anywhere;
+    }
+
+    .word {
+      min-width: 0;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-size: clamp(1.22rem, 6vw, 2rem);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+
+
+    .word-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42em;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .spade-marker {
+      display: none;
+      flex: 0 0 auto;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.05em;
+      line-height: 1;
+      color: var(--ink);
+      transform: translateY(-0.02em);
+    }
+
+    .word-row.has-spade .spade-marker {
+      display: inline-block;
+    }
+
+    .bottom-controls {
+      position: fixed;
+      z-index: 10;
+      left: max(14px, env(safe-area-inset-left));
+      right: max(14px, env(safe-area-inset-right));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .next-btn {
+      pointer-events: auto;
+      width: min(732px, 100%);
+      min-width: 0;
+      min-height: 62px;
+      border-radius: 12px 18px 10px 16px;
+      padding: 12px 18px;
+      background: var(--green);
+      color: #fffaf1;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-size: 1.14rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.035em;
+      box-shadow: 0 7px 0 var(--green-dark);
+    }
+
+    .next-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 4px 0 var(--green-dark);
+    }
+
+    @media (max-width: 430px) {
+      body {
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+      }
+
+      .menu {
+        padding: 3px 0;
+      }
+
+      .menu-card {
+        padding: 25px 16px 22px;
+        border-radius: 10px 22px 12px 18px;
+        transform: none;
+      }
+
+      .subtitle {
+        margin-bottom: 21px;
+      }
+
+      .setting-block {
+        margin-bottom: 20px;
+      }
+
+      .setting-heading {
+        margin-bottom: 8px;
+      }
+
+      .timer-options,
+      .difficulty-options {
+        gap: 7px;
+      }
+
+      .time-option {
+        padding-inline: 4px;
+        font-size: 0.9rem;
+      }
+
+      .difficulty-option {
+        min-height: 48px;
+        aspect-ratio: auto;
+      }
+
+      .topbar {
+        grid-template-columns: 58px minmax(0, 1fr) 58px;
+        gap: 6px;
+        padding: 7px;
+      }
+
+      .small-btn {
+        min-height: 44px;
+        font-size: 0.67rem;
+        padding-inline: 2px;
+      }
+
+      .card {
+        padding: 7px;
+      }
+
+      .word-row {
+        grid-template-columns: 78px minmax(0, 1fr);
+        min-height: 72px;
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .category {
+        font-size: 0.67rem;
+        letter-spacing: 0.08em;
+      }
+
+      .word {
+        font-size: clamp(1.14rem, 5.8vw, 1.55rem);
+      }
+
+  
+    .word-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42em;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .spade-marker {
+      display: none;
+      flex: 0 0 auto;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.05em;
+      line-height: 1;
+      color: var(--ink);
+      transform: translateY(-0.02em);
+    }
+
+    .word-row.has-spade .spade-marker {
+      display: inline-block;
+    }
+
+    .bottom-controls {
+        left: max(10px, env(safe-area-inset-left));
+        right: max(10px, env(safe-area-inset-right));
+      }
+    }
+
+    @media (max-width: 350px) {
+      .setting-note {
+        display: none;
+      }
+
+      .word-row {
+        grid-template-columns: 70px minmax(0, 1fr);
+      }
+
+      .timer {
+        font-size: 2rem;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 520px) {
+      .menu {
+        min-height: auto;
+      }
+
+      .menu-card {
+        max-width: 680px;
+      }
+
+      .word-row {
+        min-height: 58px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <section id="menuScreen" class="screen active menu">
+      <div class="menu-card">
+        <h1>Say It</h1>
+        <p class="subtitle">
+          Pick a round length, hit start, and describe your way through the card.
+        </p>
+
+        <div class="setting-block">
+          <div class="setting-heading">
+            <p class="setting-title">Round timer</p>
+          </div>
+
+          <div class="timer-options" id="timerOptions">
+            <button class="time-option" data-seconds="30" type="button">30 sec</button>
+            <button class="time-option selected" data-seconds="60" type="button">60 sec</button>
+            <button class="time-option" data-seconds="90" type="button">90 sec</button>
+          </div>
+
+          <div class="custom-row">
+            <input
+              id="customSeconds"
+              type="number"
+              min="5"
+              max="600"
+              inputmode="numeric"
+              placeholder="Custom seconds"
+              aria-label="Custom timer length in seconds"
+            />
+          </div>
+        </div>
+
+        <div class="setting-block">
+          <div class="setting-heading">
+            <p class="setting-title">Card difficulty</p>
+            <span class="setting-note">average across the six words</span>
+          </div>
+
+          <div class="difficulty-options" id="difficultyOptions" aria-label="Card average difficulty">
+            <button class="difficulty-option" data-difficulty="1" type="button" aria-label="Difficulty 1">1</button>
+            <button class="difficulty-option" data-difficulty="2" type="button" aria-label="Difficulty 2">2</button>
+            <button class="difficulty-option selected" data-difficulty="3" type="button" aria-label="Difficulty 3">3</button>
+            <button class="difficulty-option" data-difficulty="4" type="button" aria-label="Difficulty 4">4</button>
+            <button class="difficulty-option" data-difficulty="5" type="button" aria-label="Difficulty 5">5</button>
+          </div>
+        </div>
+
+        <button id="startButton" class="primary" type="button">Start Round</button>
+        <div id="loadStatus" class="status" role="alert" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen game">
+      <div class="topbar">
+        <button id="menuButton" class="small-btn" type="button">Menu</button>
+        <div id="timer" class="timer" aria-live="off">1:00</div>
+        <button id="restartButton" class="small-btn" type="button">Restart</button>
+      </div>
+
+      <div class="card" id="card">
+        <div class="word-row">
+          <div class="category">Person</div>
+          <div class="word"><span class="word-wrap"><span class="spade-marker" aria-hidden="true">♠</span><span id="personWord">—</span></span></div>
+        </div>
+        <div class="word-row">
+          <div class="category">World</div>
+          <div class="word"><span class="word-wrap"><span class="spade-marker" aria-hidden="true">♠</span><span id="worldWord">—</span></span></div>
+        </div>
+        <div class="word-row">
+          <div class="category">Object</div>
+          <div class="word"><span class="word-wrap"><span class="spade-marker" aria-hidden="true">♠</span><span id="objectWord">—</span></span></div>
+        </div>
+        <div class="word-row">
+          <div class="category">Action</div>
+          <div class="word"><span class="word-wrap"><span class="spade-marker" aria-hidden="true">♠</span><span id="actionWord">—</span></span></div>
+        </div>
+        <div class="word-row">
+          <div class="category">Nature</div>
+          <div class="word"><span class="word-wrap"><span class="spade-marker" aria-hidden="true">♠</span><span id="natureWord">—</span></span></div>
+        </div>
+        <div class="word-row">
+          <div class="category">Random</div>
+          <div class="word"><span class="word-wrap"><span class="spade-marker" aria-hidden="true">♠</span><span id="randomWord">—</span></span></div>
+        </div>
+      </div>
+
+      <div class="bottom-controls">
+        <button id="nextButton" class="next-btn" type="button">Next Card</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const categories = [
+      { key: "person", file: "person.txt" },
+      { key: "world", file: "world.txt" },
+      { key: "object", file: "object.txt" },
+      { key: "action", file: "action.txt" },
+      { key: "nature", file: "nature.txt" },
+      { key: "random", file: "random.txt" }
+    ];
+
+    const wordLists = {};
+    const lastWords = {};
+
+    let selectedSeconds = 60;
+    let selectedDifficulty = 3;
+    let turnSeconds = 60;
+    let remainingSeconds = 60;
+    let timerId = null;
+    let audioContext = null;
+
+    const menuScreen = document.getElementById("menuScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const timerEl = document.getElementById("timer");
+    const customSeconds = document.getElementById("customSeconds");
+    const loadStatus = document.getElementById("loadStatus");
+
+    document.querySelectorAll(".time-option").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".time-option").forEach(b => b.classList.remove("selected"));
+        button.classList.add("selected");
+        selectedSeconds = Number(button.dataset.seconds);
+        customSeconds.value = "";
+      });
+    });
+
+    customSeconds.addEventListener("input", () => {
+      if (customSeconds.value) {
+        document.querySelectorAll(".time-option").forEach(b => b.classList.remove("selected"));
+      }
+    });
+
+    document.querySelectorAll(".difficulty-option").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".difficulty-option").forEach(b => b.classList.remove("selected"));
+        button.classList.add("selected");
+        selectedDifficulty = Number(button.dataset.difficulty);
+      });
+    });
+
+    document.getElementById("startButton").addEventListener("click", async () => {
+      // Unlock Web Audio immediately while the click still counts as a user gesture on iOS.
+      unlockAudio();
+
+      const custom = Number(customSeconds.value);
+      turnSeconds = customSeconds.value
+        ? Math.max(5, Math.min(600, Number.isFinite(custom) ? custom : selectedSeconds))
+        : selectedSeconds;
+
+      loadStatus.textContent = "";
+
+      try {
+        await loadAllLists();
+        menuScreen.classList.remove("active");
+        gameScreen.classList.add("active");
+        window.scrollTo(0, 0);
+        newCard();
+      } catch (error) {
+        console.error(error);
+        loadStatus.textContent =
+          "Could not load the word lists. Check that all six .txt files are beside index.html and every line uses WORD/PHRASE; 3; with a difficulty from 1–5.";
+      }
+    });
+
+    document.getElementById("nextButton").addEventListener("click", () => {
+      unlockAudio();
+      newCard();
+    });
+
+    document.getElementById("restartButton").addEventListener("click", () => {
+      unlockAudio();
+      resetTimer();
+      startTimer();
+    });
+
+    document.getElementById("menuButton").addEventListener("click", () => {
+      stopTimer();
+      gameScreen.classList.remove("active");
+      menuScreen.classList.add("active");
+      loadStatus.textContent = "";
+      window.scrollTo(0, 0);
+    });
+
+    async function loadAllLists() {
+      // Relative paths work on GitHub Pages when index.html and all .txt files
+      // are kept together in the same folder, including in a project sub-path.
+      const results = await Promise.all(
+        categories.map(async category => {
+          const response = await fetch(`./${category.file}`, { cache: "no-store" });
+
+          if (!response.ok) {
+            throw new Error(`Failed to load ${category.file}`);
+          }
+
+          const text = await response.text();
+
+          const words = text
+            .split(/\r?\n/)
+            .map((line, index) => {
+              const trimmed = line.trim();
+
+              if (!trimmed || trimmed.startsWith("#")) {
+                return null;
+              }
+
+              // Expected line format:
+              // WORD/PHRASE; 3;
+              const parts = trimmed.split(";").map(part => part.trim());
+              const word = parts[0];
+              const difficulty = Number(parts[1]);
+
+              if (!word) {
+                throw new Error(`${category.file}, line ${index + 1}: missing word/phrase`);
+              }
+
+              if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) {
+                throw new Error(
+                  `${category.file}, line ${index + 1}: difficulty must be an integer from 1 to 5`
+                );
+              }
+
+              return {
+                text: word,
+                difficulty
+              };
+            })
+            .filter(Boolean);
+
+          if (!words.length) {
+            throw new Error(`${category.file} contains no valid words`);
+          }
+
+          return [category.key, words];
+        })
+      );
+
+      results.forEach(([key, words]) => {
+        wordLists[key] = words;
+      });
+    }
+
+    function chooseTargetDifficulty() {
+      const roll = Math.random();
+      let offset;
+
+      if (roll < 0.50) {
+        offset = 0;
+      } else if (roll < 0.65) {
+        offset = -1;
+      } else if (roll < 0.80) {
+        offset = 1;
+      } else if (roll < 0.90) {
+        offset = -2;
+      } else {
+        offset = 2;
+      }
+
+      // At the ends of the 1–5 scale, impossible results are clamped.
+      return Math.max(1, Math.min(5, selectedDifficulty + offset));
+    }
+
+    function buildDifficultyBuckets() {
+      const bucketsByCategory = {};
+
+      categories.forEach(category => {
+        const buckets = new Map();
+
+        wordLists[category.key].forEach(entry => {
+          if (!buckets.has(entry.difficulty)) {
+            buckets.set(entry.difficulty, []);
+          }
+          buckets.get(entry.difficulty).push(entry);
+        });
+
+        bucketsByCategory[category.key] = buckets;
+      });
+
+      return bucketsByCategory;
+    }
+
+    function findDifficultyCombinations(targetAverage, bucketsByCategory) {
+      const desiredSum = targetAverage * categories.length;
+      const combinations = [];
+
+      function walk(index, runningSum, chosenDifficulties, weight) {
+        if (index === categories.length) {
+          combinations.push({
+            difficulties: chosenDifficulties.slice(),
+            sum: runningSum,
+            distance: Math.abs(runningSum - desiredSum),
+            weight
+          });
+          return;
+        }
+
+        const category = categories[index];
+        const buckets = bucketsByCategory[category.key];
+
+        for (const [difficulty, entries] of buckets.entries()) {
+          chosenDifficulties.push(difficulty);
+
+          walk(
+            index + 1,
+            runningSum + difficulty,
+            chosenDifficulties,
+            weight * entries.length
+          );
+
+          chosenDifficulties.pop();
+        }
+      }
+
+      walk(0, 0, [], 1);
+
+      const bestDistance = Math.min(...combinations.map(combo => combo.distance));
+      return combinations.filter(combo => combo.distance === bestDistance);
+    }
+
+    function weightedChoice(items) {
+      const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+
+      if (!Number.isFinite(totalWeight) || totalWeight <= 0) {
+        return items[Math.floor(Math.random() * items.length)];
+      }
+
+      let roll = Math.random() * totalWeight;
+
+      for (const item of items) {
+        roll -= item.weight;
+        if (roll <= 0) {
+          return item;
+        }
+      }
+
+      return items[items.length - 1];
+    }
+
+    function pickEntryForDifficulty(key, difficulty, bucketsByCategory) {
+      const list = bucketsByCategory[key].get(difficulty) || [];
+      if (!list.length) {
+        return { text: "—", difficulty: null };
+      }
+
+      // Avoid showing the exact same word twice in a row for a category
+      // whenever there is another word of the required difficulty available.
+      const alternatives = list.filter(entry => entry.text !== lastWords[key]);
+      const pool = alternatives.length ? alternatives : list;
+      const entry = pool[Math.floor(Math.random() * pool.length)];
+
+      lastWords[key] = entry.text;
+      return entry;
+    }
+
+    function generateCardEntries() {
+      const targetDifficulty = chooseTargetDifficulty();
+      const bucketsByCategory = buildDifficultyBuckets();
+      const candidates = findDifficultyCombinations(targetDifficulty, bucketsByCategory);
+      const selectedCombination = weightedChoice(candidates);
+
+      const entries = {};
+
+      categories.forEach((category, index) => {
+        entries[category.key] = pickEntryForDifficulty(
+          category.key,
+          selectedCombination.difficulties[index],
+          bucketsByCategory
+        );
+      });
+
+      return {
+        entries,
+        targetDifficulty,
+        actualAverage:
+          selectedCombination.sum / categories.length
+      };
+    }
+
+    function newCard() {
+      const card = generateCardEntries();
+
+      categories.forEach(category => {
+        const entry = card.entries[category.key];
+        const wordElement = document.getElementById(`${category.key}Word`);
+
+        wordElement.textContent = entry.text;
+
+        if (entry.difficulty !== null) {
+          wordElement.dataset.difficulty = entry.difficulty;
+        } else {
+          delete wordElement.dataset.difficulty;
+        }
+      });
+
+      // Exactly one randomly selected word on every card gets a spade marker.
+      document.querySelectorAll(".word-row").forEach(row => {
+        row.classList.remove("has-spade");
+      });
+
+      const randomSpadeIndex = Math.floor(Math.random() * categories.length);
+      document.querySelectorAll(".word-row")[randomSpadeIndex].classList.add("has-spade");
+
+      document.getElementById("card").dataset.targetDifficulty = card.targetDifficulty;
+      document.getElementById("card").dataset.averageDifficulty = card.actualAverage.toFixed(2);
+
+      resetTimer();
+      startTimer();
+    }
+
+    function resetTimer() {
+      stopTimer();
+      remainingSeconds = Math.round(turnSeconds);
+      timerEl.classList.remove("expired");
+      updateTimerDisplay();
+    }
+
+    function startTimer() {
+      const endTime = Date.now() + remainingSeconds * 1000;
+
+      timerId = setInterval(() => {
+        remainingSeconds = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+        updateTimerDisplay();
+
+        if (remainingSeconds <= 0) {
+          stopTimer();
+          timerEl.classList.add("expired");
+          playBuzzer();
+        }
+      }, 200);
+
+      updateTimerDisplay();
+    }
+
+    function stopTimer() {
+      if (timerId !== null) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+      timerEl.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function ensureAudioContext() {
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
+        if (AudioCtx) {
+          audioContext = new AudioCtx();
+        }
+      }
+
+      if (audioContext && audioContext.state === "suspended") {
+        audioContext.resume().catch(() => {});
+      }
+
+      return audioContext;
+    }
+
+    function unlockAudio() {
+      const ctx = ensureAudioContext();
+      if (!ctx) return;
+
+      try {
+        // A near-silent, tiny sound during the user's tap unlocks later
+        // timer audio on iPhone Safari.
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        gain.gain.setValueAtTime(0.00001, ctx.currentTime);
+
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.02);
+      } catch (_) {
+        // The app still functions even if audio is unavailable.
+      }
+    }
+
+    function playBuzzer() {
+      const ctx = ensureAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      const master = ctx.createGain();
+
+      master.connect(ctx.destination);
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.35, now + 0.02);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
+
+      [0, 0.28, 0.56].forEach(offset => {
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(440, now + offset);
+        oscillator.frequency.setValueAtTime(330, now + offset + 0.12);
+
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.8, now + offset + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.22);
+
+        oscillator.connect(gain);
+        gain.connect(master);
+
+        oscillator.start(now + offset);
+        oscillator.stop(now + offset + 0.24);
+      });
+
+      if (navigator.vibrate) {
+        navigator.vibrate([220, 120, 220, 120, 320]);
+      }
+    }
+  </script>
+</body>
+</html>
