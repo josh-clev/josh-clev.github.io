@@ -371,9 +371,30 @@
       box-shadow: 0 4px 0 var(--plum-dark);
     }
 
+    .debug-strip {
+      width: fit-content;
+      max-width: 100%;
+      margin: -4px auto 12px;
+      padding: 7px 11px;
+      border: 1px dashed rgba(73, 53, 39, 0.28);
+      border-radius: 9px;
+      background: rgba(247, 237, 220, 0.78);
+      color: var(--muted);
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+
+    .debug-strip strong {
+      color: var(--ink);
+    }
+
     .card {
       width: 100%;
       min-width: 0;
+      scroll-margin-top: 108px;
       overflow: hidden;
       background: var(--cream);
       border: 2px solid rgba(69, 51, 37, 0.16);
@@ -410,6 +431,7 @@
     .word {
       min-width: 0;
       font-family: "Trebuchet MS", Arial, sans-serif;
+      text-transform: capitalize;
       font-size: clamp(1.22rem, 6vw, 2rem);
       font-weight: 900;
       line-height: 1.08;
@@ -419,26 +441,32 @@
     }
 
 
+    .word-row {
+      position: relative;
+    }
+
     .word-wrap {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.42em;
+      display: inline;
       min-width: 0;
       max-width: 100%;
     }
 
     .spade-marker {
       display: none;
-      flex: 0 0 auto;
+      position: absolute;
+      left: 2px;
+      top: 50%;
+      z-index: 2;
       font-family: Georgia, "Times New Roman", serif;
-      font-size: 1.05em;
+      font-size: 1.15rem;
       line-height: 1;
       color: var(--ink);
-      transform: translateY(-0.02em);
+      transform: translateY(-50%);
+      pointer-events: none;
     }
 
     .word-row.has-spade .spade-marker {
-      display: inline-block;
+      display: block;
     }
 
     .bottom-controls {
@@ -550,26 +578,32 @@
       }
 
   
+    .word-row {
+      position: relative;
+    }
+
     .word-wrap {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.42em;
+      display: inline;
       min-width: 0;
       max-width: 100%;
     }
 
     .spade-marker {
       display: none;
-      flex: 0 0 auto;
+      position: absolute;
+      left: 2px;
+      top: 50%;
+      z-index: 2;
       font-family: Georgia, "Times New Roman", serif;
-      font-size: 1.05em;
+      font-size: 1.15rem;
       line-height: 1;
       color: var(--ink);
-      transform: translateY(-0.02em);
+      transform: translateY(-50%);
+      pointer-events: none;
     }
 
     .word-row.has-spade .spade-marker {
-      display: inline-block;
+      display: block;
     }
 
     .bottom-controls {
@@ -670,6 +704,10 @@
         <button id="restartButton" class="small-btn" type="button">Restart</button>
       </div>
 
+      <div class="debug-strip">
+        Average difficulty: <strong id="averageDifficulty">—</strong>
+      </div>
+
       <div class="card" id="card">
         <div class="word-row">
           <div class="category">Person</div>
@@ -767,8 +805,18 @@
         await loadAllLists();
         menuScreen.classList.remove("active");
         gameScreen.classList.add("active");
-        window.scrollTo(0, 0);
         newCard();
+
+        // Move straight to the generated card after starting a round.
+        // Two animation frames give Safari/iPhone time to lay out the newly shown screen.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            document.getElementById("card").scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+          });
+        });
       } catch (error) {
         console.error(error);
         loadStatus.textContent =
@@ -1015,6 +1063,7 @@
 
       document.getElementById("card").dataset.targetDifficulty = card.targetDifficulty;
       document.getElementById("card").dataset.averageDifficulty = card.actualAverage.toFixed(2);
+      document.getElementById("averageDifficulty").textContent = card.actualAverage.toFixed(2);
 
       resetTimer();
       startTimer();
