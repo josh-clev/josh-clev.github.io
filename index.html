@@ -246,6 +246,15 @@
       border-color: var(--plum);
     }
 
+    .players-list { display: grid; gap: 9px; margin-bottom: 10px; }
+    .player-row { display: grid; grid-template-columns: minmax(0, 1fr) 74px 42px; gap: 8px; }
+    .player-row input { min-width: 0; min-height: 46px; padding: 10px; border: 2px solid rgba(70, 51, 38, 0.2); border-radius: 9px; background: #fffaf1; color: var(--ink); font-size: 16px; }
+    .player-row button, .add-player { min-height: 46px; border-radius: 9px; background: var(--plum); color: #fffaf1; font-family: "Trebuchet MS", Arial, sans-serif; font-weight: 900; }
+    .add-player { padding: 0 18px; background: var(--green); }
+    .player-heading { display: grid; grid-template-columns: minmax(0, 1fr) 74px 42px; gap: 8px; color: var(--muted); font-family: "Trebuchet MS", Arial, sans-serif; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; }
+
+    .player-name { padding: 8px 12px 12px; text-align: center; font-family: "Trebuchet MS", Arial, sans-serif; font-size: clamp(1.15rem, 5vw, 1.6rem); font-weight: 900; overflow-wrap: anywhere; }
+
     .difficulty-options {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -734,6 +743,13 @@
           </div>
         </div>
 
+        <div class="setting-block">
+          <div class="setting-heading"><p class="setting-title">Players</p></div>
+          <div class="player-heading"><span>Name</span><span>Team</span></div>
+          <div id="playersList" class="players-list"></div>
+          <button id="addPlayerButton" class="add-player" type="button">+ Add player</button>
+        </div>
+
         <button id="startButton" class="primary" type="button">Start Round</button>
         <div id="loadStatus" class="status" role="alert" aria-live="polite"></div>
       </div>
@@ -751,6 +767,7 @@
       </div>
 
       <div class="card" id="card">
+        <div id="playerName" class="player-name"></div>
         <div class="word-row">
           <div class="category">Person</div>
           <div class="word"><span class="word-wrap"><span class="spade-marker" aria-hidden="true">♠</span><span id="personWord">—</span></span></div>
@@ -802,12 +819,31 @@
     let remainingSeconds = 60;
     let timerId = null;
     let audioContext = null;
+    let players = [];
+    let teamOrder = [];
+    let teamTurn = 0;
+    let playerTurns = new Map();
 
     const menuScreen = document.getElementById("menuScreen");
     const gameScreen = document.getElementById("gameScreen");
     const timerEl = document.getElementById("timer");
     const customSeconds = document.getElementById("customSeconds");
     const loadStatus = document.getElementById("loadStatus");
+    const playersList = document.getElementById("playersList");
+
+    function addPlayer(name = "", team = "") {
+      const row = document.createElement("div");
+      row.className = "player-row";
+      row.innerHTML = '<input class="player-input" type="text" maxlength="40" placeholder="Player name" aria-label="Player name"><input class="team-input" type="number" min="1" max="99" inputmode="numeric" placeholder="#" aria-label="Team number"><button type="button" aria-label="Remove player">×</button>';
+      row.querySelector(".player-input").value = name;
+      row.querySelector(".team-input").value = team;
+      row.querySelector("button").addEventListener("click", () => row.remove());
+      playersList.appendChild(row);
+    }
+
+    document.getElementById("addPlayerButton").addEventListener("click", () => addPlayer());
+    addPlayer();
+    addPlayer();
 
     document.querySelectorAll(".time-option").forEach(button => {
       button.addEventListener("click", () => {
@@ -842,6 +878,18 @@
         : selectedSeconds;
 
       loadStatus.textContent = "";
+      const rows = [...playersList.querySelectorAll(".player-row")];
+      players = rows.map(row => ({
+        name: row.querySelector(".player-input").value.trim(),
+        team: Number(row.querySelector(".team-input").value)
+      }));
+      if (!players.length || players.some(player => !player.name || !Number.isInteger(player.team) || player.team < 1 || player.team > 99)) {
+        loadStatus.textContent = "Add at least one player, with a name and a team number from 1 to 99 for each player.";
+        return;
+      }
+      teamOrder = [...new Set(players.map(player => player.team))].sort((a, b) => a - b);
+      teamTurn = 0;
+      playerTurns = new Map(teamOrder.map(team => [team, 0]));
 
       try {
         await loadAllLists();
@@ -862,7 +910,7 @@
       } catch (error) {
         console.error(error);
         loadStatus.textContent =
-          "Could not load the word lists. Check that all six .txt files are beside index.html and every line uses WORD/PHRASE; 3; with a difficulty from 1–5.";
+          "Could not load the word lists. Check that all six .txt files are beside index.html and every line has a word and difficulty from 1–5.";
       }
     });
 
@@ -912,6 +960,7 @@
               const parts = trimmed.split(";").map(part => part.trim());
               const word = parts[0];
               const difficulty = Number(parts[1]);
+              const clear = parts[2] === "clear";
 
               if (!word) {
                 throw new Error(`${category.file}, line ${index + 1}: missing word/phrase`);
@@ -925,7 +974,8 @@
 
               return {
                 text: word,
-                difficulty
+                difficulty,
+                clear
               };
             })
             .filter(Boolean);
@@ -943,13 +993,13 @@
       });
     }
 
-    function buildDifficultyBuckets() {
+    function buildDifficultyBuckets(preferClear) {
       const bucketsByCategory = {};
 
       categories.forEach(category => {
         const buckets = new Map();
 
-        wordLists[category.key].forEach(entry => {
+        wordLists[category.key].filter(entry => !preferClear || entry.clear).forEach(entry => {
           if (!buckets.has(entry.difficulty)) {
             buckets.set(entry.difficulty, []);
           }
@@ -978,8 +1028,8 @@
       return entry;
     }
 
-    function generateCardEntries() {
-      const bucketsByCategory = buildDifficultyBuckets();
+    function generateCardEntries(preferClear) {
+      const bucketsByCategory = buildDifficultyBuckets(preferClear);
       const entries = {};
 
       categories.forEach(category => {
@@ -1005,7 +1055,14 @@
     }
 
     function newCard() {
-      const card = generateCardEntries();
+      const team = teamOrder[teamTurn];
+      const members = players.filter(player => player.team === team);
+      const position = playerTurns.get(team);
+      const player = members[position % members.length];
+      const card = generateCardEntries(player.name.toLocaleLowerCase() === "charlotte");
+      document.getElementById("playerName").textContent = player.name;
+      playerTurns.set(team, position + 1);
+      teamTurn = (teamTurn + 1) % teamOrder.length;
 
       categories.forEach(category => {
         const entry = card.entries[category.key];
